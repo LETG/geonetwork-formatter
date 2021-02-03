@@ -25,7 +25,7 @@
   <xsl:include href="layout/utility-fn.xsl"/>
 
   <!-- The core formatter XSL layout based on the editor configuration -->
-  <xsl:include href="sharedFormatterDir/xslt/render-layout.xsl"/>
+  <xsl:include href="layout/render-layout.xsl"/>
 
   <!-- Define the metadata to be loaded for this schema plugin-->
   <xsl:variable name="metadata" select="/root/gmd:MD_Metadata"/>
@@ -70,12 +70,12 @@
 
   <xsl:template mode="getOverviews" match="gmd:MD_Metadata">
     <section class="gn-md-side-overview">
-      <h4>
-        <i class="fa fa-fw fa-image">&#160;</i>
+      <h2>
+        <i class="fa fa-fw fa-image"><xsl:comment select="'overview'"/></i>
         <span>
           <xsl:value-of select="$schemaStrings/overviews"/>
         </span>
-      </h4>
+      </h2>
 
       <xsl:for-each select="gmd:identificationInfo/*/gmd:graphicOverview/*">
         <img class="gn-img-thumbnail center-block"
@@ -94,8 +94,7 @@
   </xsl:template>
 
   <!-- Extend on rigth side -->
-  <xsl:template mode="getExtent"
-                match="gmd:MD_Metadata">
+  <xsl:template mode="getExtent" match="gmd:MD_Metadata">
     <section class="gn-md-side-extent">
       <h2>
         <i class="fa fa-fw fa-map-marker"><xsl:comment select="'image'"/></i>
@@ -110,11 +109,31 @@
                                   xs:double(gmd:eastBoundLongitude/gco:Decimal),
                                   xs:double(gmd:northBoundLatitude/gco:Decimal))"/>
 
-        <br/>
-        <br/>
       </xsl:for-each>  
     </section>
   </xsl:template>
+
+    <!-- Display thesaurus name and the list of keywords -->
+  <xsl:template  mode="getTags" match="gmd:MD_Metadata">
+    <section>
+      <h2>
+        <i class="fa fa-fw fa-tags"><xsl:comment select="'image'"/></i>
+        <span>Mots clés
+        </span>
+      </h2> 
+      <xsl:for-each select="gmd:identificationInfo/*/gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword">
+        <xsl:variable name="urlKeyword" select="normalize-space(.)"/>
+        <xsl:if test="$urlKeyword != ''">
+          <span class="badge">
+            <a href="{$nodeUrl}fre/catalog.search#/search?keyword={$urlKeyword}">
+              <xsl:value-of select="."/>
+            </a>
+          </span>
+        </xsl:if>
+      </xsl:for-each>
+    </section>
+  </xsl:template>
+  
 
   <xsl:template mode="getMetadataHeader" match="gmd:MD_Metadata">
    
@@ -165,7 +184,7 @@
     <!-- Resume -->
     <div class="Resume">
      <dl>
-      <div> Résume :</div>
+      <div style="padding-top: 10px;" >Résume</div>
        <div class="alert alert-info">
          <xsl:for-each select="gmd:identificationInfo/*/gmd:abstract">
            <xsl:call-template name="localised">
@@ -204,19 +223,18 @@
       </dl>
      </div> 
 
-      <!-- Utilisation -->
-    <div class="Keyword">
-       <dl>
-        <dt>Mots clés</dt>
-        <dd>
-          <xsl:for-each select="gmd:identificationInfo/*/gmd:descriptiveKeywords/gmd:MD_Keywords">
-            <xsl:call-template name="keywords"/>
-         </xsl:for-each>
-        </dd>
+    <div class="associate">
+      <dl>
+      <dt><i class="fa fa-fw fa-link"><xsl:comment select="'icon'"/></i>
+      <span><xsl:value-of select="$schemaStrings/associatedResources"/></span></dt>
+      <dd>
+        <div gn-related="md" data-user="user" data-types="{$sideRelated}">
+          Not available
+        </div>
+      </dd>
       </dl>
     </div>
 
-    <!-- Ressources associées -->
   </xsl:template>
 
   <!-- A contact is displayed with its role as header -->
@@ -285,85 +303,48 @@
               </xsl:choose>
   </xsl:template>
 
-  <!-- Telechargement -->
-  <xsl:template mode="render-field"
-                match="gmd:distributionInfo"
-                priority="101">
-    <dl class="gn-link"
-        itemprop="distribution"
-        itemscope="itemscope"
-        itemtype="http://schema.org/DataDownload">
-      <dt>
-        Accéder aux données :
-      </dt>
-      <dd>
-        <xsl:for-each select="*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
-          <xsl:if test="gmd:protocol[* = 'WWW:DOWNLOAD-1.0-http--download']">
-            <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
-            <xsl:variable name="linkName">
-              <xsl:choose>
-                <xsl:when test="gmd:name[* != '']">
-                  <xsl:apply-templates mode="render-value" select="*/gmd:name"/>
-                </xsl:when>
-                <xsl:when test="gmd:description[* != '']">
-                  <xsl:apply-templates mode="render-value" select="*/gmd:description"/>
-                </xsl:when>
-                <xsl:otherwise>
-                  <xsl:value-of select="$linkUrl"/>
-                </xsl:otherwise>
-              </xsl:choose>
-            </xsl:variable>
-          
-            <a href="{$linkUrl}" title="{$linkName}">
-              <xsl:value-of select="$linkName"/>
-            </a>
-            <xsl:if test="gmd:description[* != '' and * != $linkName]">
-              <p>
-                <xsl:apply-templates mode="render-value" select="gmd:description"/>
-              </p>
-            </xsl:if>
+  <!-- Accès aux données -->
+  <xsl:template  mode="getData" match="gmd:MD_Metadata">
+    <section>
+      <h2>
+        <i class="fa fa-fw fa-database"><xsl:comment select="'données'"/></i>
+        <span>Accéder aux données</span>
+      </h2> 
+      <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
+       <xsl:if test="gmd:protocol[* = 'WWW:DOWNLOAD-1.0-http--download']">
+        <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
+        <xsl:if test="$linkUrl != ''">
+          <p><a href="{$linkUrl}" >
+            <xsl:value-of select="gmd:description"/>
+          </a></p>
+         </xsl:if>
+        </xsl:if>
+      </xsl:for-each>
+    </section>
+  </xsl:template>
+  
+  <!-- Références -->
+  <xsl:template  mode="getRef" match="gmd:MD_Metadata">
+    <section >
+      <h2>
+        <i class="fa fa-fw fa-link"><xsl:comment select="'références'"/></i>
+        <span>Références</span>
+      </h2> 
+      <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
+        <xsl:if test="gmd:protocol[* = 'WWW:LINK-1.0-http--link']">
+          <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>      
+          <xsl:if test="$linkUrl != ''">
+             <p><a href="{$linkUrl}">
+              <xsl:value-of select="gmd:description"/>
+            </a></p>
           </xsl:if>
-        </xsl:for-each>
-      </dd>
-      </dl>
-      <dl>
-      <dt>
-         Références :
-      </dt>
-      <dd>
-        <xsl:for-each select="*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
-          <xsl:if test="gmd:protocol[* = 'WWW:LINK-1.0-http--link']">
-            <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
-            <xsl:variable name="linkName">
-              <xsl:choose>
-                <xsl:when test="gmd:name[* != '']">
-                  <xsl:apply-templates mode="render-value" select="*/gmd:name"/>
-                </xsl:when>
-                <xsl:when test="gmd:description[* != '']">
-                  <xsl:apply-templates mode="render-value" select="*/gmd:description"/>
-                </xsl:when>
-                <xsl:otherwise>
-                  <xsl:value-of select="$linkUrl"/>
-                </xsl:otherwise>
-              </xsl:choose>
-            </xsl:variable>
-          
-            <a href="{$linkUrl}" title="{$linkName}">
-              <xsl:value-of select="$linkName"/>
-            </a>
-            <xsl:if test="gmd:description[* != '' and * != $linkName]">
-              <p>
-                <xsl:apply-templates mode="render-value" select="gmd:description"/>
-              </p>
-            </xsl:if>
-          </xsl:if>
-        </xsl:for-each>
-      </dd>
-    </dl>
+        </xsl:if>
+      </xsl:for-each>
+    </section>
   </xsl:template>
 
   
-     <xsl:template mode="getMetadataCitation" match="gmd:MD_Metadata">
+  <xsl:template mode="getMetadataCitation" match="gmd:MD_Metadata">
     <!-- Citation -->
     <div class="Citation">
     <table class="table">
@@ -427,30 +408,19 @@
     </div>
     </xsl:template>
 
-  <!-- Display thesaurus name and the list of keywords -->
-  <xsl:template name="keywords">
-    <xsl:for-each select="gmd:keyword">
-      <xsl:variable name="urlKeyword" select="normalize-space(.)"/>
-        <a href="{$nodeUrl}fre/catalog.search#/search?keyword={$urlKeyword}">
-          <xsl:apply-templates mode="render-value" select="."/>
-        </a>
-      </xsl:for-each>
-  </xsl:template>
-
-
   <!-- Date -->
   <xsl:template name="date">
     <dl class="gn-date">
       <dt>
         <xsl:value-of select="tr:node-label(tr:create($schema), name(), null)"/>
         <xsl:if test="*/gmd:dateType/*[@codeListValue != '']">
-          (<xsl:apply-templates mode="render-value"
+          (<xsl:apply-templates mode="render-value" 
                                 select="*/gmd:dateType/*/@codeListValue"/>)
         </xsl:if>
       </dt>
       <dd>
-        <xsl:apply-templates mode="render-value"
-                             select="*/gmd:date/*"/>
+        <xsl:variable name="date" select="*/gmd:date/*" />
+        <xsl:value-of select="substring($date, 6, 2)"/>/<xsl:value-of select="substring($date, 3, 2)"/>/<xsl:value-of select="substring($date, 1, 4)"/>
       </dd>
     </dl>
   </xsl:template>
@@ -462,40 +432,8 @@
   <xsl:template mode="render-field" match="*">
     <xsl:apply-templates mode="render-field"/>
   </xsl:template>
-
-  <!-- ... Dates - formatting is made on the client side by the directive  -->
-  <xsl:template mode="render-value" match="gco:Date[matches(., '[0-9]{4}')]">
-    <span data-gn-humanize-time="{.}" data-format="YYYY">
-      <xsl:value-of select="."/>
-    </span>
-  </xsl:template>
-
-  <xsl:template mode="render-value" match="gco:Date[matches(., '[0-9]{4}-[0-9]{2}')]">
-    <span data-gn-humanize-time="{.}" data-format="MMM YYYY">
-      <xsl:value-of select="."/>
-    </span>
-  </xsl:template>
-
-  <xsl:template mode="render-value" match="gco:Date[matches(., '[0-9]{4}-[0-9]{2}-[0-9]{2}')]">
-    <span data-gn-humanize-time="{.}" data-format="DD MMM YYYY">
-      <xsl:value-of select="."/>
-    </span>
-  </xsl:template>
-
-  <xsl:template mode="render-value" match="gco:DateTime[matches(., '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}')]">
-    <span data-gn-humanize-time="{.}">
-      <xsl:value-of select="."/>
-    </span>
-  </xsl:template>
-
-  <xsl:template mode="render-value"
-                match="gco:Date|gco:DateTime">
-    <span data-gn-humanize-time="{.}">
-      <xsl:value-of select="."/>
-    </span>
-  </xsl:template>
-
-  <xsl:template mode="render-value"
+ 
+    <xsl:template mode="render-value"
                 match="gmd:language/gco:CharacterString">
     <span data-translate="">
       <xsl:value-of select="."/>
