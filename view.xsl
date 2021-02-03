@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:gmd="http://www.isotc211.org/2005/gmd"
-                xmlns:gco="http://www.isotc211.org/2005/gco"
-                xmlns:gmx="http://www.isotc211.org/2005/gmx"
-                xmlns:gml="http://www.opengis.net/gml"
-                xmlns:xs="http://www.w3.org/2001/XMLSchema"
-                xmlns:tr="java:org.fao.geonet.api.records.formatters.SchemaLocalizations"
-                xmlns:gn-fn-render="http://geonetwork-opensource.org/xsl/functions/render"
-                xmlns:gn-fn-metadata="http://geonetwork-opensource.org/xsl/functions/metadata"
-                xmlns:gn-fn-iso19139="http://geonetwork-opensource.org/xsl/functions/profiles/iso19139"
-                xmlns:saxon="http://saxon.sf.net/"
-                version="2.0"
-                extension-element-prefixes="saxon"
-                exclude-result-prefixes="#all">
-  
+  xmlns:gmd="http://www.isotc211.org/2005/gmd"
+  xmlns:gco="http://www.isotc211.org/2005/gco"
+  xmlns:gmx="http://www.isotc211.org/2005/gmx"
+  xmlns:gml="http://www.opengis.net/gml"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:tr="java:org.fao.geonet.api.records.formatters.SchemaLocalizations"
+  xmlns:gn-fn-render="http://geonetwork-opensource.org/xsl/functions/render"
+  xmlns:gn-fn-metadata="http://geonetwork-opensource.org/xsl/functions/metadata"
+  xmlns:gn-fn-iso19139="http://geonetwork-opensource.org/xsl/functions/profiles/iso19139"
+  xmlns:saxon="http://saxon.sf.net/" version="2.0" extension-element-prefixes="saxon" exclude-result-prefixes="#all">
+
   <xsl:variable name="configuration" select="document('layout/config-editor.xml')"/>
- <!-- Required for utility-fn.xsl -->
   <xsl:variable name="editorConfig" select="document('layout/config-editor.xml')"/>
 
   <!-- Some utility -->
@@ -24,7 +20,7 @@
   <xsl:include href="layout/utility-tpl-multilingual.xsl"/>
   <xsl:include href="layout/utility-fn.xsl"/>
 
-  <!-- The core formatter XSL layout based on the editor configuration -->
+  <!-- The core formatter XSL layout -->
   <xsl:include href="layout/render-layout.xsl"/>
 
   <!-- Define the metadata to be loaded for this schema plugin-->
@@ -32,6 +28,7 @@
   <xsl:variable name="langId" select="gn-fn-iso19139:getLangId($metadata, $language)"/>
   <xsl:param name="citation" select="'true'"/>
 
+  <!-- create DOI url from data-->
   <xsl:param name="doiUrl">
     <xsl:for-each select="/root/gmd:MD_Metadata/gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
       <xsl:if test="gmd:protocol/gco:CharacterString='DOI'">
@@ -41,10 +38,7 @@
   </xsl:param>
 
   <!-- Ignore some fields displayed in header or in right column -->
-  <xsl:template mode="render-field"
-                match="gmd:graphicOverview|gmd:abstract|gmd:title"
-                priority="2000"/>
-
+  <xsl:template mode="render-field" match="gmd:graphicOverview|gmd:abstract|gmd:title" priority="2000"/>
 
   <!-- Specific schema rendering -->
   <xsl:template mode="getMetadataTitle" match="gmd:MD_Metadata">
@@ -61,25 +55,27 @@
         <xsl:with-param name="langId" select="$langId"/>
       </xsl:call-template>
     </xsl:for-each>
-  </xsl:template> 
+  </xsl:template>
 
-    <!-- Icone Title -->
+  <!-- Icone Title -->
   <xsl:template mode="getMetadataHierarchyLevel" match="gmd:MD_Metadata">
     <xsl:value-of select="gmd:hierarchyLevel/gmd:MD_ScopeCode/@codeListValue"/>
   </xsl:template>
 
+  <!-- Overview -->
   <xsl:template mode="getOverviews" match="gmd:MD_Metadata">
     <section class="gn-md-side-overview">
       <h2>
-        <i class="fa fa-fw fa-image"><xsl:comment select="'overview'"/></i>
+        <i class="fa fa-fw fa-image">
+          <xsl:comment select="'overview'"/>
+        </i>
         <span>
           <xsl:value-of select="$schemaStrings/overviews"/>
         </span>
       </h2>
 
       <xsl:for-each select="gmd:identificationInfo/*/gmd:graphicOverview/*">
-        <img class="gn-img-thumbnail center-block"
-             src="{gmd:fileName/*}"/>
+        <img class="gn-img-thumbnail center-block" src="{gmd:fileName/*}"/>
 
         <xsl:for-each select="gmd:fileDescription">
           <div class="gn-img-thumbnail-caption">
@@ -97,11 +93,14 @@
   <xsl:template mode="getExtent" match="gmd:MD_Metadata">
     <section class="gn-md-side-extent">
       <h2>
-        <i class="fa fa-fw fa-map-marker"><xsl:comment select="'image'"/></i>
-        <span><xsl:comment select="name()"/>
+        <i class="fa fa-fw fa-map-marker">
+          <xsl:comment select="'etendu spatiale'"/>
+        </i>
+        <span>
+          <xsl:comment select="name()"/>
           <xsl:value-of select="$schemaStrings/spatialExtent"/>
         </span>
-      </h2> 
+      </h2>
       <xsl:for-each select="gmd:identificationInfo/*/gmd:extent/*/gmd:geographicElement/gmd:EX_GeographicBoundingBox[gmd:westBoundLongitude/gco:Decimal != '']">
         <xsl:copy-of select="gn-fn-render:bbox(
                                   xs:double(gmd:westBoundLongitude/gco:Decimal),
@@ -109,64 +108,80 @@
                                   xs:double(gmd:eastBoundLongitude/gco:Decimal),
                                   xs:double(gmd:northBoundLatitude/gco:Decimal))"/>
 
-      </xsl:for-each>  
+      </xsl:for-each>
+
+      <h2>
+        <i class="fa fa-fw fa-clock-o">
+          <xsl:comment select="'time'"/>
+        </i>
+        <span>
+          Etendue temporelle
+        </span>
+      </h2>
+      <div>
+       <xsl:value-of select="gmd:identificationInfo/*/gmd:extent/*/gmd:temporalElement/*/gmd:extent/gml:TimePeriod/gml:beginPosition" />
+       <xsl:value-of select="gmd:identificationInfo/*/gmd:extent/*/gmd:temporalElement/*/gmd:extent/gml:TimePeriod/gml:endPosition" />
+      </div>
+
     </section>
   </xsl:template>
 
-    <!-- Display thesaurus name and the list of keywords -->
-  <xsl:template  mode="getTags" match="gmd:MD_Metadata">
+  <!-- Display thesaurus name and the list of keywords -->
+  <xsl:template mode="getTags" match="gmd:MD_Metadata">
     <section>
       <h2>
-        <i class="fa fa-fw fa-tags"><xsl:comment select="'image'"/></i>
+        <i class="fa fa-fw fa-tags">
+          <xsl:comment select="'image'"/>
+        </i>
         <span>Mots clés
         </span>
-      </h2> 
+      </h2>
       <xsl:for-each select="gmd:identificationInfo/*/gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword">
         <xsl:variable name="urlKeyword" select="normalize-space(.)"/>
-        <xsl:if test="$urlKeyword != ''">
-          <span class="badge">
+        <xsl:if test="$urlKeyword != ''">   
             <a href="{$nodeUrl}fre/catalog.search#/search?keyword={$urlKeyword}">
-              <xsl:value-of select="."/>
+              <span class="badge">
+                <xsl:value-of select="."/>
+              </span>
             </a>
-          </span>
         </xsl:if>
       </xsl:for-each>
     </section>
   </xsl:template>
-  
+
 
   <xsl:template mode="getMetadataHeader" match="gmd:MD_Metadata">
-   
+
     <!-- Auteur -->
     <div class="Auteur">
-        <dl>
-          <dt>Auteur (s)</dt>
-          <dd>
-             <xsl:for-each select="gmd:identificationInfo/gmd:MD_DataIdentification/*[gmd:CI_ResponsibleParty]">
-              <xsl:call-template name="auteur"/>
-              </xsl:for-each>
-            </dd>
-          </dl>
-      </div>
+      <dl>
+        <dt>Auteur (s)</dt>
+        <dd>
+          <xsl:for-each select="gmd:identificationInfo/gmd:MD_DataIdentification/*[gmd:CI_ResponsibleParty]">
+            <xsl:call-template name="auteur"/>
+          </xsl:for-each>
+        </dd>
+      </dl>
+    </div>
 
     <!-- Date-->
     <xsl:for-each select="gmd:identificationInfo/*/gmd:citation/*/gmd:date">
       <div class="Date">
-            <xsl:call-template name="date"/>
+        <xsl:call-template name="date"/>
       </div>
     </xsl:for-each>
 
     <!-- Editeur -->
-     <div class="Editeur">
-        <dl>
-          <dt>Editeur</dt>
-          <dd>
-             <xsl:for-each select="gmd:distributionInfo/*/gmd:distributor/gmd:MD_Distributor/*[gmd:CI_ResponsibleParty]">
-                <xsl:call-template name="editeur"/>
-            </xsl:for-each>
-          </dd>
-        </dl>
-      </div>
+    <div class="Editeur">
+      <dl>
+        <dt>Editeur</dt>
+        <dd>
+          <xsl:for-each select="gmd:distributionInfo/*/gmd:distributor/gmd:MD_Distributor/*[gmd:CI_ResponsibleParty]">
+            <xsl:call-template name="editeur"/>
+          </xsl:for-each>
+        </dd>
+      </dl>
+    </div>
 
     <!-- DOI -->
     <div class="doi">
@@ -175,29 +190,33 @@
         <xsl:if test="gmd:protocol/gco:CharacterString='DOI'">
           <dl>
             <dt>DOI</dt>
-            <dd><a href="{$doiUrl}"><xsl:value-of select="$doiUrl"/></a></dd>
+            <dd>
+              <a href="{$doiUrl}">
+                <xsl:value-of select="$doiUrl"/>
+              </a>
+            </dd>
           </dl>
         </xsl:if>
       </xsl:for-each>
     </div>
-   
+
     <!-- Resume -->
     <div class="Resume">
-     <dl>
-      <div style="padding-top: 10px;" >Résume</div>
-       <div class="alert alert-info">
-         <xsl:for-each select="gmd:identificationInfo/*/gmd:abstract">
-           <xsl:call-template name="localised">
-             <xsl:with-param name="langId" select="$langId"/>
-           </xsl:call-template>
-         </xsl:for-each>
+      <dl>
+        <div style="padding-top: 10px;">Résume</div>
+        <div class="alert alert-info">
+          <xsl:for-each select="gmd:identificationInfo/*/gmd:abstract">
+            <xsl:call-template name="localised">
+              <xsl:with-param name="langId" select="$langId"/>
+            </xsl:call-template>
+          </xsl:for-each>
         </div>
-        </dl>
+      </dl>
     </div>
 
     <!-- Genealogie -->
-     <div class="Genealogie">
-     <dl>
+    <div class="Genealogie">
+      <dl>
         <dt>Génealogie</dt>
         <dd>
           <xsl:for-each select="gmd:dataQualityInfo/*/gmd:lineage/gmd:LI_Lineage/gmd:statement">
@@ -205,36 +224,42 @@
               <xsl:with-param name="langId" select="$langId"/>
             </xsl:call-template>
           </xsl:for-each>
-          </dd>
-       </dl>
-     </div> 
+        </dd>
+      </dl>
+    </div>
 
     <!-- Utilisation -->
     <div class="Utilisation">
       <dl>
         <dt>Utilisation</dt>
         <dd>
-        <xsl:for-each select="gmd:identificationInfo/*/gmd:resourceConstraints/*/gmd:useLimitation">
-          <xsl:call-template name="localised">
-            <xsl:with-param name="langId" select="$langId"/>
-          </xsl:call-template>
-         </xsl:for-each>
+          <xsl:for-each select="gmd:identificationInfo/*/gmd:resourceConstraints/*/gmd:useLimitation">
+            <xsl:call-template name="localised">
+              <xsl:with-param name="langId" select="$langId"/>
+            </xsl:call-template>
+          </xsl:for-each>
         </dd>
-      </dl>
-     </div> 
-
-    <div class="associate">
-      <dl>
-      <dt><i class="fa fa-fw fa-link"><xsl:comment select="'icon'"/></i>
-      <span><xsl:value-of select="$schemaStrings/associatedResources"/></span></dt>
-      <dd>
-        <div gn-related="md" data-user="user" data-types="{$sideRelated}">
-          Not available
-        </div>
-      </dd>
       </dl>
     </div>
 
+    <div class="associate">
+      <dl>
+        <dt>
+          <i class="fa fa-fw fa-link">
+            <xsl:comment select="'icon'"/>
+          </i>
+          <span>
+            <xsl:value-of select="$schemaStrings/associatedResources"/>
+          </span>
+        </dt>
+        <dd>
+          <div gn-related="md" data-user="user" data-types="{$sideRelated}">
+          Not available
+          </div>
+        </dd>
+      </dl>
+    </div>
+  
   </xsl:template>
 
   <!-- A contact is displayed with its role as header -->
@@ -242,171 +267,176 @@
 
     <xsl:variable name="email">
       <xsl:for-each select="*/gmd:contactInfo/*/gmd:address/*/gmd:electronicMailAddress">
-        <xsl:apply-templates mode="render-value" select="."/><xsl:if test="position() != last()">, </xsl:if>
+        <xsl:apply-templates mode="render-value" select="."/>
+        <xsl:if test="position() != last()">, </xsl:if>
       </xsl:for-each>
     </xsl:variable>
 
     <!-- Display name is <individual name> ( <org name> ) -->
     <xsl:variable name="displayName">
       <xsl:choose>
-        <xsl:when
-          test="*/gmd:organisationName and */gmd:individualName">
+        <xsl:when test="*/gmd:organisationName and */gmd:individualName">
           <!-- Org name may be multilingual -->
           <xsl:value-of select="*/gmd:individualName"/>
           <xsl:if test="*/gmd:positionName">
-            (<xsl:apply-templates mode="render-value"
-                                  select="*/gmd:positionName"/>) - 
+            ( <xsl:apply-templates mode="render-value" select="*/gmd:positionName"/>) - 
           </xsl:if>
-           (<xsl:apply-templates mode="render-value"
-                               select="*/gmd:organisationName"/>)
+           ( <xsl:apply-templates mode="render-value" select="*/gmd:organisationName"/>)
         </xsl:when>
         <xsl:otherwise>
           <xsl:value-of select="*/gmd:individualName|*/gmd:organisationName"/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-          <div>
-              <xsl:choose>
-                <xsl:when test="$email">
-                  <a href="mailto:{normalize-space($email)}">
-                    <xsl:value-of select="$displayName"/>&#160;
-                  </a>
-                </xsl:when>
-                <xsl:otherwise>
-                  <xsl:value-of select="$displayName"/>
-                </xsl:otherwise>
-              </xsl:choose>
-          </div>
+    <div>
+      <xsl:choose>
+        <xsl:when test="$email">
+          <a href="mailto:{normalize-space($email)}">
+            <xsl:value-of select="$displayName"/>&#160;
+          </a>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="$displayName"/>
+        </xsl:otherwise>
+      </xsl:choose>
+    </div>
   </xsl:template>
 
   <xsl:template name="editeur">
 
     <xsl:variable name="emailEditeur">
       <xsl:for-each select="*/gmd:contactInfo/*/gmd:address/*/gmd:electronicMailAddress">
-        <xsl:apply-templates mode="render-value" select="."/><xsl:if test="position() != last()">, </xsl:if>
+        <xsl:apply-templates mode="render-value" select="."/>
+        <xsl:if test="position() != last()">, </xsl:if>
       </xsl:for-each>
     </xsl:variable>
 
     <!-- Display name is <individual name> ( <org name> ) -->
     <xsl:variable name="displayNameEditeur">
-          <xsl:apply-templates mode="render-value" select="*/gmd:organisationName"/>
+      <xsl:apply-templates mode="render-value" select="*/gmd:organisationName"/>
     </xsl:variable>
-              <xsl:choose>
-                <xsl:when test="$emailEditeur">
-                  <a href="mailto:{normalize-space($emailEditeur)}">
-                    <xsl:value-of select="$displayNameEditeur"/>&#160;
-                  </a>
-                </xsl:when>
-                <xsl:otherwise>
-                  <xsl:value-of select="$displayNameEditeur"/>
-                </xsl:otherwise>
-              </xsl:choose>
+    <xsl:choose>
+      <xsl:when test="$emailEditeur">
+        <a href="mailto:{normalize-space($emailEditeur)}">
+          <xsl:value-of select="$displayNameEditeur"/>&#160;
+        </a>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$displayNameEditeur"/>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <!-- Accès aux données -->
-  <xsl:template  mode="getData" match="gmd:MD_Metadata">
+  <xsl:template mode="getData" match="gmd:MD_Metadata">
     <section>
       <h2>
-        <i class="fa fa-fw fa-database"><xsl:comment select="'données'"/></i>
+        <i class="fa fa-fw fa-database">
+          <xsl:comment select="'données'"/>
+        </i>
         <span>Accéder aux données</span>
-      </h2> 
+      </h2>
       <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
-       <xsl:if test="gmd:protocol[* = 'WWW:DOWNLOAD-1.0-http--download']">
-        <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
-        <xsl:if test="$linkUrl != ''">
-          <p><a href="{$linkUrl}" >
-            <xsl:value-of select="gmd:description"/>
-          </a></p>
-         </xsl:if>
-        </xsl:if>
-      </xsl:for-each>
-    </section>
-  </xsl:template>
-  
-  <!-- Références -->
-  <xsl:template  mode="getRef" match="gmd:MD_Metadata">
-    <section >
-      <h2>
-        <i class="fa fa-fw fa-link"><xsl:comment select="'références'"/></i>
-        <span>Références</span>
-      </h2> 
-      <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
-        <xsl:if test="gmd:protocol[* = 'WWW:LINK-1.0-http--link']">
-          <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>      
+        <xsl:if test="gmd:protocol[* = 'WWW:DOWNLOAD-1.0-http--download']">
+          <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
           <xsl:if test="$linkUrl != ''">
-             <p><a href="{$linkUrl}">
-              <xsl:value-of select="gmd:description"/>
-            </a></p>
+            <p>
+              <a href="{$linkUrl}">
+                <xsl:value-of select="gmd:description"/>
+              </a>
+            </p>
           </xsl:if>
         </xsl:if>
       </xsl:for-each>
     </section>
   </xsl:template>
 
-  
+  <!-- Références -->
+  <xsl:template mode="getRef" match="gmd:MD_Metadata">
+    <section >
+      <h2>
+        <i class="fa fa-fw fa-link">
+          <xsl:comment select="'références'"/>
+        </i>
+        <span>Références</span>
+      </h2>
+      <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
+        <xsl:if test="gmd:protocol[* = 'WWW:LINK-1.0-http--link']">
+          <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
+          <xsl:if test="$linkUrl != ''">
+            <p>
+              <a href="{$linkUrl}">
+                <xsl:value-of select="gmd:description"/>
+              </a>
+            </p>
+          </xsl:if>
+        </xsl:if>
+      </xsl:for-each>
+    </section>
+  </xsl:template>
+
   <xsl:template mode="getMetadataCitation" match="gmd:MD_Metadata">
     <!-- Citation -->
     <div class="Citation">
-    <table class="table">
-      <tr class="active">
-        <td>
-          <div class="pull-left text-muted">
-            <i class="fa fa-quote-left fa-4x">&#160;</i>
-          </div>
-        </td>
-        <td>
-          <em title="{$schemaStrings/citationProposal-help}">
-            <xsl:value-of select="$schemaStrings/citationProposal"/>
-          </em><br/>
+      <table class="table">
+        <tr class="active">
+          <td>
+            <div class="pull-left text-muted">
+              <i class="fa fa-quote-left fa-4x">&#160;</i>
+            </div>
+          </td>
+          <td>
+            <em title="{$schemaStrings/citationProposal-help}">
+              <xsl:value-of select="$schemaStrings/citationProposal"/>
+            </em>
+            <br/>
 
-          <!-- Custodians -->
-          <xsl:for-each select="gmd:identificationInfo/*/gmd:pointOfContact/
+            <!-- Custodians -->
+            <xsl:for-each select="gmd:identificationInfo/*/gmd:pointOfContact/
                                   *[gmd:role/*/@codeListValue = ('custodian', 'author')]">
-            <xsl:variable name="name"
-                          select="normalize-space(gmd:individualName)"/>
+              <xsl:variable name="name" select="normalize-space(gmd:individualName)"/>
 
-            <xsl:value-of select="$name"/>
-            <xsl:if test="$name != ''">&#160;</xsl:if>
-            <xsl:if test="position() != last()">,&#160;</xsl:if>
-          </xsl:for-each>
+              <xsl:value-of select="$name"/>
+              <xsl:if test="$name != ''">&#160;</xsl:if>
+              <xsl:if test="position() != last()">,&#160;</xsl:if>
+            </xsl:for-each>
 
-          <!-- Publication year -->
-          <xsl:variable name="publicationDate"
-                        select="gmd:identificationInfo/*/gmd:citation/*/gmd:date/*[
+            <!-- Publication year -->
+            <xsl:variable name="publicationDate" select="gmd:identificationInfo/*/gmd:citation/*/gmd:date/*[
                                     gmd:dateType/*/@codeListValue = 'publication']/
                                       gmd:date/gco:*"/>
 
-          <xsl:if test="$publicationDate != ''">
+            <xsl:if test="$publicationDate != ''">
             (<xsl:value-of select="substring($publicationDate, 1, 4)"/>)
-          </xsl:if>
+            </xsl:if>
 
-          <xsl:text>. </xsl:text>
+            <xsl:text>. </xsl:text>
 
-          <!-- Title -->
-          <xsl:for-each select="gmd:identificationInfo/*/gmd:citation/*/gmd:title">
-            <xsl:call-template name="localised">
-              <xsl:with-param name="langId" select="$langId"/>
-            </xsl:call-template>
-          </xsl:for-each>
+            <!-- Title -->
+            <xsl:for-each select="gmd:identificationInfo/*/gmd:citation/*/gmd:title">
+              <xsl:call-template name="localised">
+                <xsl:with-param name="langId" select="$langId"/>
+              </xsl:call-template>
+            </xsl:for-each>
 
-          <xsl:text>. </xsl:text>
+            <xsl:text>. </xsl:text>
 
-          <!-- Publishers -->
-          <xsl:for-each select="gmd:identificationInfo/*/gmd:pointOfContact/
+            <!-- Publishers -->
+            <xsl:for-each select="gmd:identificationInfo/*/gmd:pointOfContact/
                                   *[gmd:role/*/@codeListValue = 'publisher']">
-            <xsl:value-of select="gmd:organisationName/*"/>
-            <xsl:if test="position() != last()">&#160;-&#160;</xsl:if>
-          </xsl:for-each>
+              <xsl:value-of select="gmd:organisationName/*"/>
+              <xsl:if test="position() != last()">&#160;-&#160;</xsl:if>
+            </xsl:for-each>
 
-          <!-- Link -->
-          <a href="{$doiUrl}">
-            <xsl:value-of select="$doiUrl"/>
-          </a>
-        </td>
-      </tr>
-    </table>
+            <!-- Link -->
+            <a href="{$doiUrl}">
+              <xsl:value-of select="$doiUrl"/>
+            </a>
+          </td>
+        </tr>
+      </table>
     </div>
-    </xsl:template>
+  </xsl:template>
 
   <!-- Date -->
   <xsl:template name="date">
@@ -414,8 +444,7 @@
       <dt>
         <xsl:value-of select="tr:node-label(tr:create($schema), name(), null)"/>
         <xsl:if test="*/gmd:dateType/*[@codeListValue != '']">
-          (<xsl:apply-templates mode="render-value" 
-                                select="*/gmd:dateType/*/@codeListValue"/>)
+          ( <xsl:apply-templates mode="render-value" select="*/gmd:dateType/*/@codeListValue"/>)
         </xsl:if>
       </dt>
       <dd>
@@ -425,34 +454,30 @@
     </dl>
   </xsl:template>
 
- <!-- Elements to avoid render -->
+  <!-- Elements to avoid render -->
   <xsl:template mode="render-field" match="gmd:PT_Locale" priority="100"/>
 
   <!-- Traverse the tree -->
   <xsl:template mode="render-field" match="*">
     <xsl:apply-templates mode="render-field"/>
   </xsl:template>
- 
-    <xsl:template mode="render-value"
-                match="gmd:language/gco:CharacterString">
+
+  <xsl:template mode="render-value" match="gmd:language/gco:CharacterString">
     <span data-translate="">
       <xsl:value-of select="."/>
     </span>
   </xsl:template>
 
   <!-- ... Codelists -->
-  <xsl:template mode="render-value"
-                match="@codeListValue">
+  <xsl:template mode="render-value" match="@codeListValue">
     <xsl:variable name="id" select="."/>
-    <xsl:variable name="codelistTranslation"
-                  select="tr:codelist-value-label(
+    <xsl:variable name="codelistTranslation" select="tr:codelist-value-label(
                             tr:create($schema),
                             parent::node()/local-name(), $id)"/>
     <xsl:choose>
       <xsl:when test="$codelistTranslation != ''">
 
-        <xsl:variable name="codelistDesc"
-                      select="tr:codelist-value-desc(
+        <xsl:variable name="codelistDesc" select="tr:codelist-value-desc(
                             tr:create($schema),
                             parent::node()/local-name(), $id)"/>
         <span title="{$codelistDesc}">
@@ -466,20 +491,17 @@
   </xsl:template>
 
   <!-- Enumeration -->
-  <xsl:template mode="render-value"
-                match="gmd:MD_TopicCategoryCode|
+  <xsl:template mode="render-value" match="gmd:MD_TopicCategoryCode|
                         gmd:MD_ObligationCode|
                         gmd:MD_PixelOrientationCode">
     <xsl:variable name="id" select="."/>
-    <xsl:variable name="codelistTranslation"
-                  select="tr:codelist-value-label(
+    <xsl:variable name="codelistTranslation" select="tr:codelist-value-label(
                             tr:create($schema),
                             local-name(), $id)"/>
     <xsl:choose>
       <xsl:when test="$codelistTranslation != ''">
 
-        <xsl:variable name="codelistDesc"
-                      select="tr:codelist-value-desc(
+        <xsl:variable name="codelistDesc" select="tr:codelist-value-desc(
                             tr:create($schema),
                             local-name(), $id)"/>
         <span title="{$codelistDesc}">
@@ -492,9 +514,7 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template mode="render-value"
-                match="@gco:nilReason[. = 'withheld']"
-                priority="100">
+  <xsl:template mode="render-value" match="@gco:nilReason[. = 'withheld']" priority="100">
     <i class="fa fa-lock text-warning" title="{{{{'withheld' | translate}}}}">&#160;</i>
   </xsl:template>
   <xsl:template mode="render-value" match="@*"/>

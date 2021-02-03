@@ -159,41 +159,16 @@
 
               <xsl:apply-templates mode="getMetadataHeader" select="$metadata"/>
 
-              <xsl:if test="$related != ''">
-                <div gn-related="md"
-                     data-user="user"
-                     data-types="{$related}"><xsl:comment select="'icon'"/></div>
-              </xsl:if>
             </header>
 
-            <div>
-              <xsl:choose>
-                <xsl:when test="$template != ''">
-                  <saxon:call-template name="{$template}"/>
-                </xsl:when>
-                <xsl:otherwise>
-                  <xsl:apply-templates mode="render-toc" select="$viewConfig"/>
-                  <!-- Tab panes -->
-                  <div>
-                    <xsl:if test="$tabs = 'true'">
-                      <xsl:attribute name="class" select="'tab-content'"/>
-                    </xsl:if>
-                    <xsl:for-each select="$viewConfig/*">
-                      <xsl:sort select="@formatter-order"
-                                data-type="number"/>
-                      <xsl:apply-templates mode="render-view"
-                                           select="."/>
-                    </xsl:for-each>
-                  </div>
-                </xsl:otherwise>
-              </xsl:choose>
-            </div>
-
             <xsl:if test="$citation = 'true'">
+              <br/>
               <xsl:apply-templates mode="getMetadataCitation" select="$metadata"/>
             </xsl:if>
           </div>
+          
           <div class="gn-md-side gn-md-side-advanced col-md-4">
+            
             <xsl:apply-templates mode="getData" select="$metadata"/>
             <xsl:apply-templates mode="getOverviews" select="$metadata"/>
             <xsl:apply-templates mode="getExtent" select="$metadata"/>
@@ -201,53 +176,13 @@
               <xsl:with-param name="byThesaurus" select="true()"/>
             </xsl:apply-templates>
             <xsl:apply-templates mode="getRef" select="$metadata"/>
-            
-            <!-- Display link to portal and other view only
-            when in pure HTML mode. -->
-            <xsl:if test="$viewMenu = 'true'">
-              <section class="gn-md-side-viewmode">
-                <h2>
-                  <i class="fa fa-fw fa-eye"><xsl:comment select="'icon'"/></i>
-                  <span><xsl:value-of select="$schemaStrings/viewMode"/></span>
-                </h2>
-                <xsl:for-each select="$configuration/editor/views/view[not(@disabled)]">
-                  <ul>
-                    <li>
-                      <a>
-                        <xsl:attribute name="href">
-                          <xsl:choose>
-                            <xsl:when test="@name = 'xml'">
-                              <xsl:value-of select="concat($nodeUrl, 'api/records/', $metadataUuid, '/formatters/xml')"/>
-                            </xsl:when>
-                            <xsl:otherwise>
-                              <xsl:value-of select="concat($nodeUrl, 'api/records/', $metadataUuid, '/formatters/xsl-view?view=', @name, '&amp;portalLink=', $portalLink)"/>
-                            </xsl:otherwise>
-                          </xsl:choose>
-                        </xsl:attribute>
-                        <xsl:variable name="name" select="@name"/>
-                        <xsl:value-of select="$schemaStrings/*[name(.) = $name]"/>
-                      </a>
-                    </li>
-                  </ul>
-                </xsl:for-each>
-              </section>
-            </xsl:if>
 
           </div>
         </div>
 
-        <!--
-        TODO: scrollspy or tabs on header ?
-        <div class="gn-scroll-spy"
-             data-gn-scroll-spy="gn-metadata-view-{$metadataId}"
-             data-watch=""
-             data-filter="div > h3"/>-->
         <footer>
-          <xsl:comment>Not yet</xsl:comment>
         </footer>
       </article>
-      <br/>
-      <br/>
     </div>
   </xsl:template>
 
