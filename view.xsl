@@ -21,12 +21,19 @@
   <xsl:include href="layout/utility-fn.xsl"/>
 
   <!-- The core formatter XSL layout -->
-  <xsl:include href="layout/render-layout.xsl"/>
+  <xsl:include href="sharedFormatterDir/xslt/render-layout.xsl"/>
 
   <!-- Define the metadata to be loaded for this schema plugin-->
   <xsl:variable name="metadata" select="/root/gmd:MD_Metadata"/>
   <xsl:variable name="langId" select="gn-fn-iso19139:getLangId($metadata, $language)"/>
-  <xsl:param name="citation" select="'true'"/>
+  <xsl:variable name="citation" select="'true'"/>
+  <xsl:variable name="isSocialbarEnabled" select="false()"/>
+  <xsl:variable name="sideRelated" select="''"/>
+  <!-- This one is not take in account, probably overloaded by geonetwork configuration -->
+  <xsl:variable name="viewMenu" select="'false'" />
+
+  <!-- Empty template call to avoir wrong boostrap div row on 3.10 version -->
+  <xsl:variable name="template" select="'empty'"/> 
 
   <!-- create DOI url from data-->
   <xsl:param name="doiUrl">
@@ -64,6 +71,7 @@
 
   <!-- Overview -->
   <xsl:template mode="getOverviews" match="gmd:MD_Metadata">
+    <xsl:apply-templates mode="getData" select="$metadata"/>
     <section class="gn-md-side-overview">
       <h2>
         <i class="fa fa-fw fa-image">
@@ -101,15 +109,24 @@
           <xsl:value-of select="$schemaStrings/spatialExtent"/>
         </span>
       </h2>
-      <xsl:for-each select="gmd:identificationInfo/*/gmd:extent/*/gmd:geographicElement/gmd:EX_GeographicBoundingBox[gmd:westBoundLongitude/gco:Decimal != '']">
-        <xsl:copy-of select="gn-fn-render:bbox(
-                                  xs:double(gmd:westBoundLongitude/gco:Decimal),
-                                  xs:double(gmd:southBoundLatitude/gco:Decimal),
-                                  xs:double(gmd:eastBoundLongitude/gco:Decimal),
-                                  xs:double(gmd:northBoundLatitude/gco:Decimal))"/>
+       <div>
+        <xsl:for-each select="gmd:identificationInfo/*/gmd:extent/*/gmd:geographicElement/*[
+                number(gmd:westBoundLongitude/gco:Decimal)
+                and number(gmd:southBoundLatitude/gco:Decimal)
+                and number(gmd:eastBoundLongitude/gco:Decimal)
+                and number(gmd:northBoundLatitude/gco:Decimal)
+                and normalize-space(gmd:westBoundLongitude/gco:Decimal) != ''
+                and normalize-space(gmd:southBoundLatitude/gco:Decimal) != ''
+                and normalize-space(gmd:eastBoundLongitude/gco:Decimal) != ''
+                and normalize-space(gmd:northBoundLatitude/gco:Decimal) != '']">
+              <xsl:copy-of select="gn-fn-render:bbox(
+                                    xs:double(gmd:westBoundLongitude/gco:Decimal),
+                                    xs:double(gmd:southBoundLatitude/gco:Decimal),
+                                    xs:double(gmd:eastBoundLongitude/gco:Decimal),
+                                    xs:double(gmd:northBoundLatitude/gco:Decimal))"/>
 
-      </xsl:for-each>
-
+          </xsl:for-each>
+      </div>
       <h2>
         <i class="fa fa-fw fa-clock-o">
           <xsl:comment select="'time'"/>
@@ -119,8 +136,10 @@
         </span>
       </h2>
       <div>
-       <xsl:value-of select="gmd:identificationInfo/*/gmd:extent/*/gmd:temporalElement/*/gmd:extent/gml:TimePeriod/gml:beginPosition" />
-       <xsl:value-of select="gmd:identificationInfo/*/gmd:extent/*/gmd:temporalElement/*/gmd:extent/gml:TimePeriod/gml:endPosition" />
+        <xsl:for-each select="gmd:identificationInfo/*/gmd:extent/*">
+          <xsl:value-of select="gmd:temporalElement/*/gml:beginPosition" />
+          <xsl:value-of select="gmd:temporalElement/*/gml:endPosition" />
+        </xsl:for-each>
       </div>
 
     </section>
@@ -147,6 +166,7 @@
         </xsl:if>
       </xsl:for-each>
     </section>
+    <xsl:apply-templates mode="getRef" select="$metadata"/>
   </xsl:template>
 
 
@@ -203,7 +223,7 @@
     <!-- Resume -->
     <div class="Resume">
       <dl>
-        <div style="padding-top: 10px;">Résume</div>
+        <div style="padding-top: 10px;padding-left: 10px;">Résumé</div>
         <div class="alert alert-info">
           <xsl:for-each select="gmd:identificationInfo/*/gmd:abstract">
             <xsl:call-template name="localised">
@@ -242,24 +262,23 @@
       </dl>
     </div>
 
-    <div class="associate">
+    <!-- Ressource associé -->
+    <div class="Utilisation">
       <dl>
-        <dt>
-          <i class="fa fa-fw fa-link">
-            <xsl:comment select="'icon'"/>
-          </i>
-          <span>
-            <xsl:value-of select="$schemaStrings/associatedResources"/>
-          </span>
-        </dt>
+        <dt><xsl:value-of select="$schemaStrings/associatedResources"/></dt>
         <dd>
-          <div gn-related="md" data-user="user" data-types="{$sideRelated}">
-          Not available
-          </div>
+          <xsl:variable name="nodeName" select="name()"/>
+            <xsl:for-each select="parent::node()/*[name() = $nodeName]">
+              <li><a href="#uuid={@uuidref}" target="_blank">
+                <i class="fa fa-link">&#160;</i>
+                <xsl:value-of select="@uuidref"/>
+              </a></li>
+            </xsl:for-each>
+
         </dd>
       </dl>
-    </div>
-  
+    </div>     
+
   </xsl:template>
 
   <!-- A contact is displayed with its role as header -->
@@ -450,6 +469,16 @@
       <dd>
         <xsl:variable name="date" select="*/gmd:date/*" />
         <xsl:value-of select="substring($date, 6, 2)"/>/<xsl:value-of select="substring($date, 3, 2)"/>/<xsl:value-of select="substring($date, 1, 4)"/>
+      </dd>
+    </dl>
+  </xsl:template>
+
+    <!-- Date -->
+  <xsl:template name="empty">
+    <dl class="gn-empty">
+      <dt>
+      </dt>
+      <dd>
       </dd>
     </dl>
   </xsl:template>
