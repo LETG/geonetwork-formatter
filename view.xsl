@@ -252,24 +252,25 @@
       </dl>
     </div>
 
-    <!-- Ressource associé -->
+    <!-- Parent and brothers resource -->
     <div class="Resource">
       <dl>
         <dt><xsl:value-of select="$schemaStrings/associatedResources"/></dt>
         <dd>
-          <!-- exemple c120a3fe-9341-4bb3-b58b-1be6ba1deb99 -->
-          <!-- https://portail.indigeo.fr/geonetwork/srv/api/records/c120a3fe-9341-4bb3-b58b-1be6ba1deb99/related?type=associated&amp;type=brothersAndSisters -->
-          <xsl:variable name="apiUrlRelated" select="concat($nodeUrl, 'api/records/', $metadataUuid, '/related?type=associated&amp;type=brothersAndSisters')"/>
+          <xsl:variable name="apiUrlRelated" select="concat($nodeUrl, 'api/records/', $metadataUuid, '/related?type=parent&amp;type=brothersAndSisters')"/>
           <xsl:variable name="associatedRecords" select="document($apiUrlRelated)"/>
 
           <xsl:for-each select="$associatedRecords/related/*/item">
             <xsl:variable name="uuid" select="id"/>
-              <xsl:comment>Added from <xsl:value-of select="$apiUrlRelated"/> </xsl:comment>
-
-              <li><a href="#uuid={$uuid}" target="_blank">
-                <i class="fa fa-link">&#160;</i>
-                <xsl:value-of select="$uuid"/>
-              </a></li>
+            <xsl:variable name="title" select="title"/>
+              <xsl:variable name="urlAssociated" select="concat($nodeUrl, 'fre/catalog.search#/metadata//', $uuid)"/>
+               <xsl:comment>Added from <xsl:value-of select="$apiUrlRelated"/> </xsl:comment>
+               <p>
+                <a href="urlAssociated" target="_blank">
+                  <i class="fa fa-link">&#160;</i>
+                  <xsl:value-of select="$title"/>
+                </a>
+              </p>
           </xsl:for-each>
         </dd>
       </dl>
