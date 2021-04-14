@@ -15,10 +15,9 @@
   <xsl:variable name="configuration" select="document('layout/config-editor.xml')"/>
   <xsl:variable name="editorConfig" select="document('layout/config-editor.xml')"/>
 
-    <!-- Some utility -->
-  <xsl:include href="layout/evaluate.xsl"/>
-  <xsl:include href="layout/utility-tpl-multilingual.xsl"/>
+  <!-- Some utility -->
   <xsl:include href="layout/utility-fn.xsl"/>
+  <xsl:include href="layout/utility-tpl-multilingual.xsl"/>
 
   <!-- Define the metadata to be loaded for this schema plugin-->
   <xsl:variable name="metadata" select="/root/gmd:MD_Metadata"/>
@@ -109,29 +108,47 @@
         </span>
       </h2>
       <div>
+        <!-- Hack to force Image width -->
+        <style type="text/css">
+          .gn-img-extent  {
+            width:100%
+          }
+        </style>
+        <!-- hack end -->
         <xsl:copy-of select="gn-fn-render:extent($metadataUuid)"/>
       </div>
 
-      <h2>
-        <i class="fa fa-fw fa-clock-o">
-          <xsl:comment select="'time'"/>
-        </i>
-        <span>
-          Etendue temporelle
-        </span>
-      </h2>
-      <div>
-          <xsl:for-each select="gmd:identificationInfo/*/gmd:extent/*/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent">
-            <xsl:for-each select="gml:TimePeriod/gml:beginPosition">
-              <xsl:value-of select="."/>
+      <xsl:if test="gmd:identificationInfo/*/gmd:extent/*/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent">
+        <h2>
+          <i class="fa fa-fw fa-clock-o"> <xsl:comment select="'Temporal extent'"/>
+          </i>
+          <span>
+            <!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+                so i made the translation my self 
+                <xsl:value-of select="$schemaStrings/temporalExtend" />-->
+            <xsl:choose>
+              <!-- could be FR or FRE-->
+              <xsl:when test="contains($langId,'#FR')">
+                Etendue temporelle
+              </xsl:when>
+              <xsl:otherwise>
+                Temporal extent
+              </xsl:otherwise>     
+            </xsl:choose>
+          </span>
+        </h2>
+        <div>
+            <xsl:for-each select="gmd:identificationInfo/*/gmd:extent/*/gmd:temporalElement/gmd:EX_TemporalExtent/gmd:extent">
+              <xsl:for-each select="gml:TimePeriod/gml:beginPosition">
+                <xsl:value-of select="."/>
+              </xsl:for-each>
+              >> 
+              <xsl:for-each select="gml:TimePeriod/gml:endPosition">
+                <xsl:value-of select="."/>
+              </xsl:for-each>
             </xsl:for-each>
-            >> 
-            <xsl:for-each select="gml:TimePeriod/gml:endPosition">
-              <xsl:value-of select="."/>
-            </xsl:for-each>
-          </xsl:for-each>
-      </div>
-
+        </div>
+      </xsl:if>
     </section>
   </xsl:template>
 
@@ -140,17 +157,27 @@
     <section>
       <h2>
         <i class="fa fa-fw fa-tags">
-          <xsl:comment select="'image'"/>
+          <xsl:comment select="'Keywords'"/>
         </i>
-        <span>Mots clés
-        </span>
+        <span><!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+              so i made the translation my self 
+              <xsl:value-of select="$schemaStrings/tags" />-->
+          <xsl:choose>
+            <!-- could be FR or FRE-->
+            <xsl:when test="contains($langId,'#FR')">
+              Mots clés
+            </xsl:when>
+            <xsl:otherwise>
+              Keywords
+            </xsl:otherwise>     
+          </xsl:choose></span>
       </h2>
       <xsl:for-each select="gmd:identificationInfo/*/gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:keyword">
         <xsl:variable name="urlKeyword" select="normalize-space(.)"/>
         <xsl:if test="$urlKeyword != ''">   
             <a href="{$nodeUrl}fre/catalog.search#/search?keyword={$urlKeyword}">
               <span class="badge">
-                <xsl:value-of select="."/>
+                <xsl:apply-templates mode="render-value" select="."/>
               </span>
             </a>
         </xsl:if>
@@ -165,7 +192,19 @@
     <!-- Auteur -->
     <div class="Auteur">
       <dl>
-        <dt>Auteur (s)</dt>
+        <dt><!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+              so i made the translation my self 
+              <xsl:value-of select="$schemaStrings/authors" />-->
+          <xsl:choose>
+            <!-- could be FR or FRE-->
+            <xsl:when test="contains($langId,'#FR')">
+              Auteur (s)
+            </xsl:when>
+            <xsl:otherwise>
+              Author (s)
+            </xsl:otherwise>     
+          </xsl:choose>       
+        </dt>
         <dd>
           <xsl:for-each select="gmd:identificationInfo/gmd:MD_DataIdentification/*[gmd:CI_ResponsibleParty]">
             <xsl:call-template name="auteur"/>
@@ -183,19 +222,32 @@
 
     <!-- Editeur -->
     <div class="Editeur">
-      <dl>
-        <dt>Editeur</dt>
-        <dd>
-          <xsl:for-each select="gmd:distributionInfo/*/gmd:distributor/gmd:MD_Distributor/*[gmd:CI_ResponsibleParty]">
-            <xsl:call-template name="editeur"/>
-          </xsl:for-each>
-        </dd>
-      </dl>
+      <xsl:if test="gmd:distributionInfo/*/gmd:distributor/gmd:MD_Distributor">
+        <dl>
+          <dt><!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+              so i made the translation my self 
+              <xsl:value-of select="$schemaStrings/publisher" />-->
+            <xsl:choose>
+              <!-- could be FR or FRE-->
+              <xsl:when test="contains($langId,'#FR')">
+              Editeur
+              </xsl:when>
+              <xsl:otherwise>
+              Publisher
+              </xsl:otherwise>     
+            </xsl:choose>       
+          </dt>
+          <dd>
+            <xsl:for-each select="gmd:distributionInfo/*/gmd:distributor/gmd:MD_Distributor/*[gmd:CI_ResponsibleParty]">
+              <xsl:call-template name="editeur"/>
+            </xsl:for-each>
+          </dd>
+        </dl>
+      </xsl:if>
     </div>
 
     <!-- DOI -->
     <div class="doi">
-      <!-- verifier si ici on ne fait pas le lien avec doi.org-->
       <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
         <xsl:if test="gmd:protocol/gco:CharacterString='DOI'">
           <dl>
@@ -213,7 +265,20 @@
     <!-- Resume -->
     <div class="Resume">
       <dl>
-        <div style="padding-top: 10px;padding-left: 10px;">Résumé</div>
+        <div style="padding-top: 10px;padding-left: 10px;">
+          <!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+              so i made the translation my self 
+              <xsl:value-of select="$schemaStrings/abstract" />-->
+          <xsl:choose>
+            <!-- could be FR or FRE-->
+            <xsl:when test="contains($langId,'#FR')">
+              Résumé
+            </xsl:when>
+            <xsl:otherwise>
+              Abstract
+            </xsl:otherwise>     
+          </xsl:choose>       
+        </div>
         <div class="alert alert-info">
           <xsl:for-each select="gmd:identificationInfo/*/gmd:abstract">
             <xsl:call-template name="localised">
@@ -227,7 +292,7 @@
     <!-- Genealogie -->
     <div class="Genealogie">
       <dl>
-        <dt>Génealogie</dt>
+        <dt><xsl:value-of select="$schemaStrings/lineage" /></dt>
         <dd>
           <xsl:for-each select="gmd:dataQualityInfo/*/gmd:lineage/gmd:LI_Lineage/gmd:statement">
             <xsl:call-template name="localised">
@@ -241,7 +306,19 @@
     <!-- Utilisation -->
     <div class="Utilisation">
       <dl>
-        <dt>Utilisation</dt>
+        <dt><!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+              so i made the translation my self 
+              <xsl:value-of select="$schemaStrings/usage" />-->
+          <xsl:choose>
+            <!-- could be FR or FRE-->
+            <xsl:when test="contains($langId,'#FR')">
+              Utilisation
+            </xsl:when>
+            <xsl:otherwise>
+              Usage
+            </xsl:otherwise>     
+          </xsl:choose>       
+         </dt>
         <dd>
           <xsl:for-each select="gmd:identificationInfo/*/gmd:resourceConstraints/*/gmd:useLimitation">
             <xsl:call-template name="localised">
@@ -293,14 +370,14 @@
       <xsl:choose>
         <xsl:when test="*/gmd:organisationName and */gmd:individualName">
           <!-- Org name may be multilingual -->
-          <xsl:value-of select="*/gmd:individualName"/>
-          <xsl:if test="*/gmd:positionName">
-            ( <xsl:apply-templates mode="render-value" select="*/gmd:positionName"/>) - 
+          <xsl:apply-templates mode="render-value" select="*/gmd:individualName"/>
+          <xsl:if test="not */gmd:positionName[@gco:nilReason]">
+            (<xsl:apply-templates mode="render-value" select="*/gmd:positionName"/>) - 
           </xsl:if>
-           ( <xsl:apply-templates mode="render-value" select="*/gmd:organisationName"/>)
+           (<xsl:apply-templates mode="render-value" select="*/gmd:organisationName"/>)
         </xsl:when>
         <xsl:otherwise>
-          <xsl:value-of select="*/gmd:individualName|*/gmd:organisationName"/>
+          <xsl:apply-templates mode="render-value" select="*/gmd:individualName|*/gmd:organisationName" />
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -345,50 +422,85 @@
 
   <!-- Accès aux données -->
   <xsl:template mode="getData" match="gmd:MD_Metadata">
-    <section>
-      <h2>
-        <i class="fa fa-fw fa-database">
-          <xsl:comment select="'données'"/>
-        </i>
-        <span>Accéder aux données</span>
-      </h2>
-      <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
-        <xsl:if test="gmd:protocol[* = 'WWW:DOWNLOAD-1.0-http--download']">
-          <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
-          <xsl:if test="$linkUrl != ''">
-            <p>
-              <a href="{$linkUrl}">
-                <xsl:value-of select="gmd:description"/>
-              </a>
-            </p>
+    <xsl:if test="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource/gmd:protocol[* = 'WWW:DOWNLOAD-1.0-http--download']">
+      <section>
+        <h2>
+          <i class="fa fa-fw fa-database"><xsl:comment select="'Data access'"/>
+          </i>
+          <span>
+            <!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+                so i made the translation my self 
+                <xsl:value-of select="$schemaStrings/dataAccess" />-->
+            <xsl:choose>
+              <!-- could be FR or FRE-->
+              <xsl:when test="contains($langId,'#FR')">
+                Accéder aux données
+              </xsl:when>
+              <xsl:otherwise>
+                Data access
+              </xsl:otherwise>     
+            </xsl:choose>
+          </span>
+        </h2>
+        <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
+          <xsl:if test="gmd:protocol[* = 'WWW:DOWNLOAD-1.0-http--download']">
+            <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
+            <xsl:if test="$linkUrl != ''">
+              <p>
+                <a href="{$linkUrl}">
+                  <xsl:choose>
+                    <xsl:when test="gmd:description">
+                      <xsl:apply-templates mode="render-value" select="gmd:description"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="$linkUrl"/>
+                    </xsl:otherwise>    
+                  </xsl:choose>
+                </a>
+              </p>
+            </xsl:if>
           </xsl:if>
-        </xsl:if>
-      </xsl:for-each>
-    </section>
+        </xsl:for-each>
+      </section>
+    </xsl:if>
   </xsl:template>
 
   <!-- Références -->
   <xsl:template mode="getRef" match="gmd:MD_Metadata">
-    <section >
-      <h2>
-        <i class="fa fa-fw fa-link">
-          <xsl:comment select="'références'"/>
-        </i>
-        <span>Références</span>
-      </h2>
-      <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
-        <xsl:if test="gmd:protocol[* = 'WWW:LINK-1.0-http--link']">
-          <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
-          <xsl:if test="$linkUrl != ''">
-            <p>
-              <a href="{$linkUrl}">
-                <xsl:value-of select="gmd:description"/>
-              </a>
-            </p>
+    <xsl:if test="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource/gmd:protocol[* = 'WWW:LINK-1.0-http--link']">
+      <section >
+        <h2>
+          <i class="fa fa-fw fa-link"><xsl:comment select="'Related works'"/>
+          </i>
+          <span>
+            <!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+                so i made the translation my self 
+                <xsl:value-of select="$schemaStrings/relatedWorks" />-->
+            <xsl:choose>
+              <!-- could be FR or FRE-->
+              <xsl:when test="contains($langId,'#FR')">
+                Références
+              </xsl:when>
+              <xsl:otherwise>
+                Related Works
+              </xsl:otherwise>     
+            </xsl:choose>
+          </span>
+        </h2>
+        <xsl:for-each select="gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
+          <xsl:if test="gmd:protocol[* = 'WWW:LINK-1.0-http--link']">
+            <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
+            <xsl:if test="$linkUrl != ''">
+              <p>
+                <a href="{$linkUrl}">
+                <xsl:apply-templates mode="render-value" select="gmd:description"/>
+                </a>
+              </p>
+            </xsl:if>
           </xsl:if>
-        </xsl:if>
-      </xsl:for-each>
-    </section>
+        </xsl:for-each>
+      </section>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template mode="getMetadataCitation" match="gmd:MD_Metadata">
@@ -412,7 +524,7 @@
                                   *[gmd:role/*/@codeListValue = ('custodian', 'author')]">
               <xsl:variable name="name" select="normalize-space(gmd:individualName)"/>
 
-              <xsl:value-of select="$name"/>
+              <xsl:apply-templates mode="render-value" select="gmd:individualName"/>
               <xsl:if test="$name != ''">&#160;</xsl:if>
               <xsl:if test="position() != last()">,&#160;</xsl:if>
             </xsl:for-each>
@@ -488,6 +600,12 @@
     <xsl:apply-templates mode="render-field"/>
   </xsl:template>
 
+  <xsl:template mode="render-value" match="*">
+    <xsl:call-template name="localised">
+      <xsl:with-param name="langId" select="$langId"/>
+    </xsl:call-template>
+  </xsl:template>
+
   <xsl:template mode="render-value" match="gmd:language/gco:CharacterString">
     <span data-translate="">
       <xsl:value-of select="."/>
@@ -515,5 +633,6 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+
 
 </xsl:stylesheet>
