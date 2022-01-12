@@ -10,8 +10,8 @@
   xmlns:gn-fn-render="http://geonetwork-opensource.org/xsl/functions/render"
   xmlns:gn-fn-metadata="http://geonetwork-opensource.org/xsl/functions/metadata"
   xmlns:gn-fn-iso19139="http://geonetwork-opensource.org/xsl/functions/profiles/iso19139"
-  xmlns:saxon="http://saxon.sf.net/" version="2.0" extension-element-prefixes="saxon" exclude-result-prefixes="#all">
-
+  xmlns:saxon="http://saxon.sf.net/" version="2.0" extension-element-prefixes="saxon" exclude-result-prefixes="#all"
+  xmlns:xlink="http://www.w3.org/1999/xlink">
   <xsl:variable name="configuration" select="document('layout/config-editor.xml')"/>
   <xsl:variable name="editorConfig" select="document('layout/config-editor.xml')"/>
 
@@ -329,6 +329,40 @@
       </dl>
     </div>
 
+    <!-- Licence -->
+    <xsl:if test="gmd:identificationInfo/*/gmd:resourceConstraints/*/gmd:accessConstraints/gmd:MD_RestrictionCode/@codeListValue= 'license'">
+      <div class="Licence">
+        <dl>
+          <dt><!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+                so i made the translation my self 
+                <xsl:value-of select="$schemaStrings/usage" />-->
+            <xsl:choose>
+              <!-- could be FR or FRE-->
+              <xsl:when test="contains($langId,'#FR')">
+                Licence
+              </xsl:when>
+              <xsl:otherwise>
+                License
+              </xsl:otherwise>
+            </xsl:choose>
+           </dt>
+          <dd>
+            <xsl:for-each select="gmd:identificationInfo/*/gmd:resourceConstraints/*/gmd:otherConstraints">
+              <xsl:variable name="linkUrl" select="gmx:Anchor/@xlink:href"/>
+              <xsl:if test="$linkUrl != ''">
+                <p>
+                  <a href="{$linkUrl}" target="_blank">
+                    <xsl:call-template name="localised">
+                      <xsl:with-param name="langId" select="$langId"/>
+                    </xsl:call-template>
+                  </a>
+                </p>
+              </xsl:if>
+            </xsl:for-each>
+          </dd>
+        </dl>
+      </div>
+    </xsl:if>
     <!-- Parent, Child and brothers resource -->
     <div class="Resource">
       <dl>
