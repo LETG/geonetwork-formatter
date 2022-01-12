@@ -343,7 +343,7 @@
             <xsl:variable name="url" select="url"/>
             <xsl:comment>Added from <xsl:value-of select="$apiUrlRelated"/> </xsl:comment>
             <p>
-              <a href="{$url}" target="_blank">
+              <a href="{concat($nodeUrl, 'eng/catalog.search#/metadata/', $uuid)}" target="_blank">
                 <i class="fa fa-link">&#160;</i>
                 <xsl:value-of select="$title"/>
               </a>
