@@ -556,6 +556,14 @@
               <xsl:if test="position() != last()">&#160;-&#160;</xsl:if>
             </xsl:for-each>
 
+            <xsl:for-each select="gmd:distributionInfo/*/gmd:distributor/*/gmd:distributorContact/
+                                  *[gmd:role/*/@codeListValue = 'publisher']">
+              <xsl:apply-templates mode="render-value" select="gmd:organisationName"/>
+              <xsl:if test="position() != last()">&#160;-&#160;</xsl:if>
+            </xsl:for-each>
+
+            <xsl:text>. </xsl:text>
+
             <!-- Link -->
             <a href="{$doiUrl}">
               <xsl:value-of select="$doiUrl"/>
