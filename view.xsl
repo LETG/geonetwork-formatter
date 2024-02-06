@@ -206,7 +206,7 @@
           </xsl:choose>       
         </dt>
         <dd>
-          <xsl:for-each select="gmd:identificationInfo/gmd:MD_DataIdentification/*[gmd:CI_ResponsibleParty]">
+          <xsl:for-each select="gmd:identificationInfo/gmd:MD_DataIdentification/*[gmd:CI_ResponsibleParty/gmd:role/*/@codeListValue ='author']">         
             <xsl:call-template name="auteur"/>
           </xsl:for-each>
         </dd>
@@ -343,8 +343,8 @@
               </xsl:when>
               <xsl:otherwise>
                 License
-              </xsl:otherwise>
-            </xsl:choose>
+              </xsl:otherwise>     
+            </xsl:choose>       
            </dt>
           <dd>
             <xsl:for-each select="gmd:identificationInfo/*/gmd:resourceConstraints/*/gmd:otherConstraints">
