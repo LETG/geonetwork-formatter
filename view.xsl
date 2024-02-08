@@ -12,6 +12,7 @@
   xmlns:gn-fn-iso19139="http://geonetwork-opensource.org/xsl/functions/profiles/iso19139"
   xmlns:saxon="http://saxon.sf.net/" version="2.0" extension-element-prefixes="saxon" exclude-result-prefixes="#all"
   xmlns:xlink="http://www.w3.org/1999/xlink">
+
   <xsl:variable name="configuration" select="document('layout/config-editor.xml')"/>
   <xsl:variable name="editorConfig" select="document('layout/config-editor.xml')"/>
 
@@ -363,6 +364,7 @@
         </dl>
       </div>
     </xsl:if>
+
     <!-- Parent, Child and brothers resource -->
     <div class="Resource">
       <dl>
@@ -377,6 +379,7 @@
             <xsl:variable name="url" select="url"/>
             <xsl:comment>Added from <xsl:value-of select="$apiUrlRelated"/> </xsl:comment>
             <p>
+              <!--a href="{$url}" target="_blank"-->
               <a href="{concat($nodeUrl, 'eng/catalog.search#/metadata/', $uuid)}" target="_blank">
                 <i class="fa fa-link">&#160;</i>
                 <xsl:value-of select="$title"/>
@@ -483,17 +486,81 @@
               <p>
                 <a href="{$linkUrl}">
                   <xsl:choose>
-                    <xsl:when test="gmd:description">
-                      <xsl:apply-templates mode="render-value" select="gmd:description"/>
+                    <xsl:when test="gmd:name">
+                      <xsl:apply-templates mode="render-value" select="gmd:name"/>
                     </xsl:when>
                     <xsl:otherwise>
-                      <xsl:value-of select="$linkUrl"/>
+                      <xsl:choose>
+                        <xsl:when test="gmd:description">
+                          <xsl:apply-templates mode="render-value" select="gmd:description"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                          <xsl:value-of select="$linkUrl"/>
+                        </xsl:otherwise>
+                      </xsl:choose>
                     </xsl:otherwise>    
                   </xsl:choose>
                 </a>
               </p>
             </xsl:if>
           </xsl:if>
+        </xsl:for-each>
+      </section>
+    </xsl:if>
+    <xsl:variable name="apiUrlRelated" select="concat($nodeUrl, 'api/records/', $metadataUuid, '/related?type=children')"/>
+    <xsl:variable name="associatedRecords" select="document($apiUrlRelated)"/>
+    <xsl:if test="string-length($associatedRecords) > 67">
+      <section>
+        <h2>
+          <i class="fa fa-fw fa-database"><xsl:comment select="'Data access'"/>
+          </i>
+          <span>
+            <!-- I did not managed to add specific localisation files for this formatter geonetwork error not loading formatter
+                so i made the translation my self 
+                <xsl:value-of select="$schemaStrings/dataAccess" />-->
+            <xsl:choose>
+              <!-- could be FR or FRE-->
+              <xsl:when test="contains($langId,'#FR')">
+                Accéder aux données associées
+              </xsl:when>
+              <xsl:otherwise>
+                Associated data access
+              </xsl:otherwise>     
+            </xsl:choose>
+          </span>
+        </h2>
+        <xsl:for-each select="$associatedRecords/related/*/item">
+          <xsl:variable name="uuid" select="id"/>
+          <xsl:variable name="title" select="title"/>
+          <xsl:variable name="url" select="url"/>
+          <xsl:comment>Added from <xsl:value-of select="$apiUrlRelated"/> </xsl:comment>
+          <xsl:variable name="apiUrlChild" select="concat($nodeUrl, 'api/records/', $uuid, '/formatters/xml?approved=true')"/>
+          <xsl:for-each select="document($apiUrlChild)/gmd:MD_Metadata/gmd:distributionInfo/*/gmd:transferOptions/*/gmd:onLine/gmd:CI_OnlineResource">
+            <xsl:if test="gmd:protocol[* = 'WWW:DOWNLOAD-1.0-http--download']">
+              <xsl:variable name="linkUrl" select="gmd:linkage/gmd:URL"/>
+              <xsl:if test="$linkUrl != ''">
+                <p>
+                  <a href="{$linkUrl}">
+                    <xsl:choose>
+                      <xsl:when test="gmd:name">
+                        <xsl:apply-templates mode="render-value" select="gmd:name"/>
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <xsl:choose>
+                          <xsl:when test="gmd:description">
+                            <xsl:apply-templates mode="render-value" select="gmd:description"/>
+                          </xsl:when>
+                          <xsl:otherwise>
+                            <xsl:value-of select="$linkUrl"/>
+                          </xsl:otherwise>
+                        </xsl:choose>
+                      </xsl:otherwise>    
+                    </xsl:choose>
+                  </a>
+                </p>
+              </xsl:if>
+            </xsl:if>
+          </xsl:for-each>
         </xsl:for-each>
       </section>
     </xsl:if>
@@ -619,7 +686,7 @@
       </dt>
       <dd>
         <xsl:variable name="date" select="*/gmd:date/*" />
-        <xsl:value-of select="substring($date, 6, 2)"/>/<xsl:value-of select="substring($date, 3, 2)"/>/<xsl:value-of select="substring($date, 1, 4)"/>
+        <xsl:value-of select="substring($date, 9, 2)"/>/<xsl:value-of select="substring($date, 6, 2)"/>/<xsl:value-of select="substring($date, 1, 4)"/>
       </dd>
     </dl>
   </xsl:template>
